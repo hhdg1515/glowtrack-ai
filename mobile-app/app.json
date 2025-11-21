@@ -1,0 +1,57 @@
+{
+  "expo": {
+    "name": "GlowTrack AI",
+    "slug": "glowtrack-mobile",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#ffffff"
+    },
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.glowtrack.ai",
+      "infoPlist": {
+        "NSCameraUsageDescription": "GlowTrack需要访问您的相机以拍摄术前术后照片",
+        "NSPhotoLibraryUsageDescription": "GlowTrack需要访问您的相册以保存和管理照片",
+        "NSPhotoLibraryAddUsageDescription": "GlowTrack需要保存照片到您的相册"
+      }
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#ffffff"
+      },
+      "package": "com.glowtrack.ai",
+      "permissions": [
+        "CAMERA",
+        "READ_EXTERNAL_STORAGE",
+        "WRITE_EXTERNAL_STORAGE"
+      ]
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "GlowTrack需要访问您的相机以拍摄术前术后照片"
+        }
+      ],
+      [
+        "expo-media-library",
+        {
+          "photosPermission": "GlowTrack需要访问您的相册以保存和管理照片",
+          "savePhotosPermission": "GlowTrack需要保存照片到您的相册"
+        }
+      ]
+    ]
+  }
+}
