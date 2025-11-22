@@ -1,9 +1,20 @@
 'use client'
 
 import Link from 'next/link'
-import { Sparkles, Camera, Users, FileText, TrendingUp, Calendar } from 'lucide-react'
+import { Sparkles, Camera, Users, FileText, TrendingUp, Calendar, Loader2 } from 'lucide-react'
+import { useClinicPatients } from '@/hooks/usePatients'
 
 export default function Dashboard() {
+  // TODO: 从用户 session 获取 clinic_id
+  const clinicId = 'clinic-demo-001'
+  const { data: patientsData, isLoading } = useClinicPatients(clinicId)
+
+  const totalPatients = patientsData?.total || 0
+  const patients = patientsData?.patients || []
+
+  // 计算总治疗次数
+  const totalTreatments = patients.reduce((sum, p) => sum + p.total_treatments, 0)
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
@@ -24,6 +35,9 @@ export default function Dashboard() {
               <Link href="/analysis" className="text-gray-700 hover:text-primary-600">
                 AI分析
               </Link>
+              <Link href="/upload" className="text-gray-700 hover:text-primary-600">
+                上传分析
+              </Link>
               <Link href="/" className="text-gray-700 hover:text-primary-600">
                 返回首页
               </Link>
@@ -40,89 +54,100 @@ export default function Dashboard() {
         </div>
 
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          <StatCard
-            icon={Users}
-            title="活跃患者"
-            value="128"
-            change="+12%"
-            positive={true}
-          />
-          <StatCard
-            icon={Camera}
-            title="本月照片"
-            value="456"
-            change="+8%"
-            positive={true}
-          />
-          <StatCard
-            icon={FileText}
-            title="生成报告"
-            value="89"
-            change="+15%"
-            positive={true}
-          />
-          <StatCard
-            icon={TrendingUp}
-            title="患者满意度"
-            value="9.2/10"
-            change="+0.3"
-            positive={true}
-          />
-        </div>
-
-        {/* Main Content Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Recent Analyses */}
-          <div className="lg:col-span-2 card">
-            <div className="flex items-center justify-between mb-6">
-              <h3 className="text-xl font-bold text-gray-900">最近的AI分析</h3>
-              <Link href="/analysis" className="text-primary-600 hover:text-primary-700 text-sm font-semibold">
-                查看全部 →
-              </Link>
-            </div>
-            <div className="space-y-4">
-              {recentAnalyses.map((analysis, index) => (
-                <AnalysisItem key={index} {...analysis} />
-              ))}
-            </div>
+        {isLoading ? (
+          <div className="flex items-center justify-center py-12">
+            <Loader2 className="w-8 h-8 text-primary-600 animate-spin" />
           </div>
-
-          {/* Quick Actions */}
-          <div className="card">
-            <h3 className="text-xl font-bold text-gray-900 mb-6">快速操作</h3>
-            <div className="space-y-3">
-              <QuickActionButton
-                icon={Camera}
-                label="上传新照片"
-                description="开始新的对比分析"
-                href="/upload"
-              />
-              <QuickActionButton
+        ) : (
+          <>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+              <StatCard
                 icon={Users}
-                label="添加患者"
-                description="创建新患者档案"
-                href="/patients/new"
+                title="总患者数"
+                value={totalPatients.toString()}
+                change="实时数据"
+                positive={true}
               />
-              <QuickActionButton
+              <StatCard
+                icon={Camera}
+                title="总治疗次数"
+                value={totalTreatments.toString()}
+                change="实时数据"
+                positive={true}
+              />
+              <StatCard
                 icon={FileText}
-                label="生成报告"
-                description="创建精美对比报告"
-                href="/reports/new"
+                title="生成报告"
+                value="89"
+                change="+15%"
+                positive={true}
+              />
+              <StatCard
+                icon={TrendingUp}
+                title="患者满意度"
+                value="9.2/10"
+                change="+0.3"
+                positive={true}
               />
             </div>
-          </div>
-        </div>
 
-        {/* Recent Activity */}
-        <div className="mt-6 card">
-          <h3 className="text-xl font-bold text-gray-900 mb-6">最近活动</h3>
-          <div className="space-y-4">
-            {recentActivities.map((activity, index) => (
-              <ActivityItem key={index} {...activity} />
-            ))}
-          </div>
-        </div>
+            {/* Main Content Grid */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              {/* Recent Patients */}
+              <div className="lg:col-span-2 card">
+                <div className="flex items-center justify-between mb-6">
+                  <h3 className="text-xl font-bold text-gray-900">最近的患者</h3>
+                  <Link href="/patients" className="text-primary-600 hover:text-primary-700 text-sm font-semibold">
+                    查看全部 →
+                  </Link>
+                </div>
+                <div className="space-y-4">
+                  {patients.length === 0 ? (
+                    <div className="text-center py-8 text-gray-500">
+                      <Users className="w-12 h-12 mx-auto mb-3 text-gray-300" />
+                      <p>还没有患者数据</p>
+                      <Link
+                        href="/patients/new"
+                        className="text-primary-600 hover:text-primary-700 text-sm mt-2 inline-block"
+                      >
+                        添加第一位患者 →
+                      </Link>
+                    </div>
+                  ) : (
+                    patients.slice(0, 5).map((patient) => (
+                      <PatientItem key={patient.id} patient={patient} />
+                    ))
+                  )}
+                </div>
+              </div>
+
+              {/* Quick Actions */}
+              <div className="card">
+                <h3 className="text-xl font-bold text-gray-900 mb-6">快速操作</h3>
+                <div className="space-y-3">
+                  <QuickActionButton
+                    icon={Camera}
+                    label="上传新照片"
+                    description="开始新的对比分析"
+                    href="/upload"
+                  />
+                  <QuickActionButton
+                    icon={Users}
+                    label="添加患者"
+                    description="创建新患者档案"
+                    href="/patients/new"
+                  />
+                  <QuickActionButton
+                    icon={FileText}
+                    label="患者列表"
+                    description="查看所有患者"
+                    href="/patients"
+                  />
+                </div>
+              </div>
+            </div>
+          </>
+        )}
       </div>
     </div>
   )
@@ -135,8 +160,8 @@ function StatCard({ icon: Icon, title, value, change, positive }: any) {
         <div>
           <p className="text-sm text-gray-600 mb-1">{title}</p>
           <p className="text-2xl font-bold text-gray-900">{value}</p>
-          <p className={`text-sm mt-1 ${positive ? 'text-green-600' : 'text-red-600'}`}>
-            {change} vs 上月
+          <p className={`text-sm mt-1 ${positive ? 'text-green-600' : 'text-gray-500'}`}>
+            {change}
           </p>
         </div>
         <div className="p-3 bg-primary-100 rounded-lg">
@@ -147,23 +172,34 @@ function StatCard({ icon: Icon, title, value, change, positive }: any) {
   )
 }
 
-function AnalysisItem({ patient, type, date, improvement }: any) {
+function PatientItem({ patient }: { patient: any }) {
+  const fullName = `${patient.first_name} ${patient.last_name}`
+
   return (
-    <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+    <Link
+      href={`/patients/${patient.id}`}
+      className="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer"
+    >
       <div className="flex items-center space-x-4">
         <div className="w-12 h-12 bg-gradient-to-br from-primary-400 to-secondary-400 rounded-full flex items-center justify-center text-white font-semibold">
-          {patient.charAt(0)}
+          {patient.first_name.charAt(0)}{patient.last_name.charAt(0)}
         </div>
         <div>
-          <h4 className="font-semibold text-gray-900">{patient}</h4>
-          <p className="text-sm text-gray-600">{type}</p>
+          <h4 className="font-semibold text-gray-900">{fullName}</h4>
+          <p className="text-sm text-gray-600">
+            {patient.email || patient.phone || '无联系信息'}
+          </p>
         </div>
       </div>
       <div className="text-right">
-        <p className="text-sm font-semibold text-green-600">{improvement} 改善</p>
-        <p className="text-xs text-gray-500">{date}</p>
+        <p className="text-sm font-semibold text-primary-600">
+          {patient.total_treatments} 次治疗
+        </p>
+        {patient.patient_id && (
+          <p className="text-xs text-gray-500">{patient.patient_id}</p>
+        )}
       </div>
-    </div>
+    </Link>
   )
 }
 
@@ -185,54 +221,3 @@ function QuickActionButton({ icon: Icon, label, description, href }: any) {
     </Link>
   )
 }
-
-function ActivityItem({ action, patient, time }: any) {
-  return (
-    <div className="flex items-center justify-between py-3 border-b border-gray-100 last:border-0">
-      <div className="flex items-center space-x-3">
-        <Calendar className="h-5 w-5 text-gray-400" />
-        <div>
-          <p className="text-sm text-gray-900">
-            <span className="font-semibold">{patient}</span> {action}
-          </p>
-        </div>
-      </div>
-      <p className="text-xs text-gray-500">{time}</p>
-    </div>
-  )
-}
-
-const recentAnalyses = [
-  {
-    patient: '张小姐',
-    type: '肉毒素注射 - 皱纹分析',
-    date: '2小时前',
-    improvement: '68%',
-  },
-  {
-    patient: '李女士',
-    type: '玻尿酸填充 - 面部轮廓',
-    date: '5小时前',
-    improvement: '82%',
-  },
-  {
-    patient: '王女士',
-    type: '激光美肤 - 肤质分析',
-    date: '1天前',
-    improvement: '45%',
-  },
-  {
-    patient: '陈小姐',
-    type: '线雕提升 - 下颌线',
-    date: '2天前',
-    improvement: '91%',
-  },
-]
-
-const recentActivities = [
-  { action: '上传了术后照片', patient: '张小姐', time: '10分钟前' },
-  { action: '生成了对比报告', patient: '李女士', time: '1小时前' },
-  { action: '完成了AI分析', patient: '王女士', time: '3小时前' },
-  { action: '创建了新档案', patient: '赵女士', time: '5小时前' },
-  { action: '分享了治疗报告', patient: '陈小姐', time: '1天前' },
-]
