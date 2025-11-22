@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { Sparkles, Users, FileText, TrendingUp, Loader2, LogOut, Camera, ChevronLeft, ChevronRight } from 'lucide-react'
+import { Sparkles, Users, FileText, TrendingUp, Loader2, LogOut, Camera, ChevronLeft, ChevronRight, Calendar, Clock } from 'lucide-react'
 import { useClinicPatients } from '@/hooks/usePatients'
 
 export default function Dashboard() {
@@ -100,32 +100,38 @@ export default function Dashboard() {
 
             {/* Main Content Grid */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-              {/* Recent Patients */}
-              <div className="lg:col-span-2 card">
-                <div className="flex items-center justify-between mb-6">
-                  <h3 className="text-xl font-bold text-gray-900">最近的患者</h3>
-                  <Link href="/patients" className="text-primary-600 hover:text-primary-700 text-sm font-semibold">
-                    查看全部 →
-                  </Link>
+              {/* Left Column - Recent Patients and Day View */}
+              <div className="lg:col-span-2 space-y-6">
+                {/* Recent Patients */}
+                <div className="card">
+                  <div className="flex items-center justify-between mb-6">
+                    <h3 className="text-xl font-bold text-gray-900">最近的患者</h3>
+                    <Link href="/patients" className="text-primary-600 hover:text-primary-700 text-sm font-semibold">
+                      查看全部 →
+                    </Link>
+                  </div>
+                  <div className="space-y-4">
+                    {patients.length === 0 ? (
+                      <div className="text-center py-8 text-gray-500">
+                        <Users className="w-12 h-12 mx-auto mb-3 text-gray-300" />
+                        <p>还没有患者数据</p>
+                        <Link
+                          href="/patients/new"
+                          className="text-primary-600 hover:text-primary-700 text-sm mt-2 inline-block"
+                        >
+                          添加第一位患者 →
+                        </Link>
+                      </div>
+                    ) : (
+                      patients.slice(0, 5).map((patient) => (
+                        <PatientItem key={patient.id} patient={patient} />
+                      ))
+                    )}
+                  </div>
                 </div>
-                <div className="space-y-4">
-                  {patients.length === 0 ? (
-                    <div className="text-center py-8 text-gray-500">
-                      <Users className="w-12 h-12 mx-auto mb-3 text-gray-300" />
-                      <p>还没有患者数据</p>
-                      <Link
-                        href="/patients/new"
-                        className="text-primary-600 hover:text-primary-700 text-sm mt-2 inline-block"
-                      >
-                        添加第一位患者 →
-                      </Link>
-                    </div>
-                  ) : (
-                    patients.slice(0, 5).map((patient) => (
-                      <PatientItem key={patient.id} patient={patient} />
-                    ))
-                  )}
-                </div>
+
+                {/* Day View */}
+                <DayView />
               </div>
 
               {/* Quick Actions and Calendar */}
@@ -225,6 +231,79 @@ function QuickActionButton({ icon: Icon, label, description, href }: any) {
         </div>
       </div>
     </Link>
+  )
+}
+
+function DayView() {
+  const today = new Date()
+  const dayName = today.toLocaleDateString('zh-CN', { weekday: 'long' })
+  const dateString = today.toLocaleDateString('zh-CN', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric'
+  })
+
+  // Mock 今日预约数据 - 实际应该从 API 获取
+  const todayAppointments = [
+    { id: 1, time: '09:00', patient: 'Sarah Zhang', type: '肉毒素注射', duration: '30分钟' },
+    { id: 2, time: '10:30', patient: 'Emma Li', type: '玻尿酸填充', duration: '45分钟' },
+    { id: 3, time: '14:00', patient: 'Jessica Wang', type: '激光美肤', duration: '60分钟' },
+    { id: 4, time: '16:00', patient: 'Amanda Chen', type: '线雕提升', duration: '90分钟' },
+  ]
+
+  return (
+    <div className="card">
+      <div className="flex items-center justify-between mb-6">
+        <div>
+          <div className="flex items-center space-x-2 mb-1">
+            <Calendar className="w-5 h-5 text-primary-600" />
+            <h3 className="text-xl font-bold text-gray-900">今日日程</h3>
+          </div>
+          <p className="text-sm text-gray-600">{dateString} · {dayName}</p>
+        </div>
+        <div className="text-right">
+          <p className="text-2xl font-bold text-primary-600">{todayAppointments.length}</p>
+          <p className="text-xs text-gray-500">个预约</p>
+        </div>
+      </div>
+
+      <div className="space-y-3">
+        {todayAppointments.length === 0 ? (
+          <div className="text-center py-8 text-gray-500">
+            <Calendar className="w-12 h-12 mx-auto mb-3 text-gray-300" />
+            <p className="text-sm">今天没有预约</p>
+          </div>
+        ) : (
+          todayAppointments.map((appointment) => (
+            <div
+              key={appointment.id}
+              className="flex items-start space-x-3 p-3 rounded-lg border border-gray-200 hover:border-primary-300 hover:bg-primary-50 transition-colors"
+            >
+              <div className="flex items-center justify-center w-16 h-16 bg-primary-100 rounded-lg flex-shrink-0">
+                <div className="text-center">
+                  <p className="text-xs text-primary-600 font-semibold">
+                    {appointment.time.split(':')[0]}
+                  </p>
+                  <p className="text-lg font-bold text-primary-700">
+                    {appointment.time.split(':')[1]}
+                  </p>
+                </div>
+              </div>
+              <div className="flex-1 min-w-0">
+                <h4 className="font-semibold text-gray-900 truncate">
+                  {appointment.patient}
+                </h4>
+                <p className="text-sm text-gray-600">{appointment.type}</p>
+                <div className="flex items-center space-x-1 mt-1">
+                  <Clock className="w-3 h-3 text-gray-400" />
+                  <p className="text-xs text-gray-500">{appointment.duration}</p>
+                </div>
+              </div>
+            </div>
+          ))
+        )}
+      </div>
+    </div>
   )
 }
 
