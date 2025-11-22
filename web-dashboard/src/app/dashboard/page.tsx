@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { Sparkles, Users, FileText, TrendingUp, Loader2, LogOut, Camera, ChevronLeft, ChevronRight, Calendar, Clock } from 'lucide-react'
+import { Sparkles, Users, FileText, TrendingUp, Loader2, LogOut, Camera, ChevronLeft, ChevronRight, Calendar, Clock, Plus } from 'lucide-react'
 import { useClinicPatients } from '@/hooks/usePatients'
 
 export default function Dashboard() {
@@ -140,16 +140,16 @@ export default function Dashboard() {
                   <h3 className="text-xl font-bold text-gray-900 mb-6">快速操作</h3>
                   <div className="space-y-3">
                     <QuickActionButton
-                      icon={Users}
-                      label="添加患者"
-                      description="创建新患者档案"
-                      href="/patients/new"
+                      icon={Calendar}
+                      label="添加预约"
+                      description="为患者安排新的治疗预约"
+                      href="/appointments"
                     />
                     <QuickActionButton
-                      icon={FileText}
-                      label="患者列表"
-                      description="查看所有患者"
-                      href="/patients"
+                      icon={Sparkles}
+                      label="生成分析"
+                      description="AI 分析治疗效果对比"
+                      href="/analysis"
                     />
                   </div>
                 </div>
@@ -267,7 +267,7 @@ function DayView() {
         </div>
       </div>
 
-      <div className="space-y-3">
+      <div className="divide-y divide-gray-100">
         {todayAppointments.length === 0 ? (
           <div className="text-center py-8 text-gray-500">
             <Calendar className="w-12 h-12 mx-auto mb-3 text-gray-300" />
@@ -277,7 +277,7 @@ function DayView() {
           todayAppointments.map((appointment) => (
             <div
               key={appointment.id}
-              className="flex items-start space-x-3 p-3 rounded-lg border border-gray-200 hover:border-primary-300 hover:bg-primary-50 transition-colors"
+              className="flex items-start space-x-3 p-3 hover:shadow-md transition-shadow"
             >
               <div className="flex items-center justify-center w-16 h-16 bg-primary-100 rounded-lg flex-shrink-0">
                 <div className="text-center">
