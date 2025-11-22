@@ -1,7 +1,8 @@
 'use client'
 
+import { useState } from 'react'
 import Link from 'next/link'
-import { Sparkles, Users, FileText, TrendingUp, Loader2, LogOut, Camera } from 'lucide-react'
+import { Sparkles, Users, FileText, TrendingUp, Loader2, LogOut, Camera, ChevronLeft, ChevronRight } from 'lucide-react'
 import { useClinicPatients } from '@/hooks/usePatients'
 
 export default function Dashboard() {
@@ -16,7 +17,7 @@ export default function Dashboard() {
   const totalTreatments = patients.reduce((sum, p) => sum + p.total_treatments, 0)
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50">
       {/* Header */}
       <header className="bg-white border-b border-gray-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
@@ -127,23 +128,28 @@ export default function Dashboard() {
                 </div>
               </div>
 
-              {/* Quick Actions */}
-              <div className="card">
-                <h3 className="text-xl font-bold text-gray-900 mb-6">快速操作</h3>
-                <div className="space-y-3">
-                  <QuickActionButton
-                    icon={Users}
-                    label="添加患者"
-                    description="创建新患者档案"
-                    href="/patients/new"
-                  />
-                  <QuickActionButton
-                    icon={FileText}
-                    label="患者列表"
-                    description="查看所有患者"
-                    href="/patients"
-                  />
+              {/* Quick Actions and Calendar */}
+              <div className="space-y-6">
+                <div className="card">
+                  <h3 className="text-xl font-bold text-gray-900 mb-6">快速操作</h3>
+                  <div className="space-y-3">
+                    <QuickActionButton
+                      icon={Users}
+                      label="添加患者"
+                      description="创建新患者档案"
+                      href="/patients/new"
+                    />
+                    <QuickActionButton
+                      icon={FileText}
+                      label="患者列表"
+                      description="查看所有患者"
+                      href="/patients"
+                    />
+                  </div>
                 </div>
+
+                {/* Calendar */}
+                <MonthCalendar />
               </div>
             </div>
           </>
@@ -178,7 +184,7 @@ function PatientItem({ patient }: { patient: any }) {
   return (
     <Link
       href={`/patients/${patient.id}`}
-      className="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer"
+      className="flex items-center justify-between py-2 hover:opacity-75 transition-opacity cursor-pointer border-b border-gray-100 last:border-b-0"
     >
       <div className="flex items-center space-x-4">
         <div className="w-12 h-12 bg-gradient-to-br from-primary-400 to-secondary-400 rounded-full flex items-center justify-center text-white font-semibold">
@@ -219,5 +225,88 @@ function QuickActionButton({ icon: Icon, label, description, href }: any) {
         </div>
       </div>
     </Link>
+  )
+}
+
+function MonthCalendar() {
+  const [currentDate, setCurrentDate] = useState(new Date())
+
+  const monthName = currentDate.toLocaleDateString('zh-CN', { month: 'long', year: 'numeric' })
+  const firstDay = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1)
+  const lastDay = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0)
+  const startDate = new Date(firstDay)
+  startDate.setDate(startDate.getDate() - firstDay.getDay())
+
+  const days = []
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+
+  for (let i = 0; i < 42; i++) {
+    const date = new Date(startDate)
+    date.setDate(date.getDate() + i)
+    const isCurrentMonth = date.getMonth() === currentDate.getMonth()
+    const isToday = date.getTime() === today.getTime()
+    days.push({ date, isCurrentMonth, isToday })
+  }
+
+  const previousMonth = () => {
+    setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() - 1))
+  }
+
+  const nextMonth = () => {
+    setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() + 1))
+  }
+
+  const weekDays = ['日', '一', '二', '三', '四', '五', '六']
+
+  return (
+    <div className="card">
+      <div className="flex items-center justify-between mb-4">
+        <h3 className="text-lg font-bold text-gray-900">{monthName}</h3>
+        <div className="flex items-center space-x-2">
+          <button
+            onClick={previousMonth}
+            className="p-1 hover:bg-gray-100 rounded-lg transition-colors"
+            title="上月"
+          >
+            <ChevronLeft className="w-5 h-5 text-gray-600" />
+          </button>
+          <button
+            onClick={nextMonth}
+            className="p-1 hover:bg-gray-100 rounded-lg transition-colors"
+            title="下月"
+          >
+            <ChevronRight className="w-5 h-5 text-gray-600" />
+          </button>
+        </div>
+      </div>
+
+      {/* Week days header */}
+      <div className="grid grid-cols-7 gap-1 mb-2">
+        {weekDays.map((day) => (
+          <div key={day} className="text-center text-xs font-semibold text-gray-600 py-2">
+            {day}
+          </div>
+        ))}
+      </div>
+
+      {/* Calendar days */}
+      <div className="grid grid-cols-7 gap-1">
+        {days.map((day, index) => (
+          <div
+            key={index}
+            className={`aspect-square flex items-center justify-center text-sm font-medium rounded transition-colors ${
+              day.isToday
+                ? 'bg-primary-600 text-white'
+                : day.isCurrentMonth
+                ? 'text-gray-900 hover:bg-gray-100'
+                : 'text-gray-300'
+            }`}
+          >
+            {day.date.getDate()}
+          </div>
+        ))}
+      </div>
+    </div>
   )
 }
