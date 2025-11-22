@@ -208,7 +208,7 @@ export default function PatientDetailPage() {
 
           {/* 右侧：治疗历史 */}
           <div className="lg:col-span-2 space-y-6">
-            {/* 治疗历史 */}
+            {/* 治疗历史和上传分析 */}
             <div className="bg-white rounded-xl shadow-md p-6">
               <div className="flex items-center justify-between mb-6">
                 <h2 className="text-2xl font-bold text-gray-900 flex items-center space-x-2">
@@ -216,13 +216,22 @@ export default function PatientDetailPage() {
                   <span>治疗历史</span>
                 </h2>
 
-                <Link
-                  href={`/upload?patient_id=${patientId}`}
-                  className="flex items-center space-x-2 px-4 py-2 bg-gradient-to-r from-primary-600 to-secondary-600 text-white rounded-lg hover:shadow-lg transition-all"
-                >
-                  <Plus className="w-4 h-4" />
-                  <span>新建治疗记录</span>
-                </Link>
+                <div className="flex items-center space-x-2">
+                  <Link
+                    href={`/upload?patient_id=${patientId}`}
+                    className="flex items-center space-x-2 px-4 py-2 bg-gradient-to-r from-primary-600 to-secondary-600 text-white rounded-lg hover:shadow-lg transition-all"
+                  >
+                    <Sparkles className="w-4 h-4" />
+                    <span>上传分析</span>
+                  </Link>
+                  <Link
+                    href={`/upload?patient_id=${patientId}`}
+                    className="flex items-center space-x-2 px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+                  >
+                    <Plus className="w-4 h-4" />
+                    <span>新建治疗</span>
+                  </Link>
+                </div>
               </div>
 
               {treatments.length === 0 ? (

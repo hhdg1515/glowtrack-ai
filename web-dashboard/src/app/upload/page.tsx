@@ -1,8 +1,8 @@
 'use client'
 
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import {
   Sparkles,
   Upload,
@@ -12,9 +12,11 @@ import {
   AlertCircle,
   Loader2,
   ArrowLeft,
-  Calendar
+  Calendar,
+  User
 } from 'lucide-react'
 import AIAnalysisLoader from '@/components/AIAnalysisLoader'
+import { usePatient } from '@/hooks/usePatients'
 
 interface UploadedImage {
   file: File
@@ -23,11 +25,14 @@ interface UploadedImage {
 
 export default function UploadPage() {
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const patientIdFromUrl = searchParams.get('patient_id') || ''
+
   const [beforeImage, setBeforeImage] = useState<UploadedImage | null>(null)
   const [afterImage, setAfterImage] = useState<UploadedImage | null>(null)
   const [treatmentType, setTreatmentType] = useState('')
   const [treatmentDate, setTreatmentDate] = useState('')
-  const [patientId, setPatientId] = useState('')
+  const [patientId, setPatientId] = useState(patientIdFromUrl)
 
   const [isAnalyzing, setIsAnalyzing] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -35,6 +40,15 @@ export default function UploadPage() {
 
   const beforeInputRef = useRef<HTMLInputElement>(null)
   const afterInputRef = useRef<HTMLInputElement>(null)
+
+  // 如果从 URL 获得了 patient_id，则加载患者信息
+  const { data: patient, isLoading: patientLoading } = usePatient(patientIdFromUrl)
+
+  useEffect(() => {
+    if (patientIdFromUrl) {
+      setPatientId(patientIdFromUrl)
+    }
+  }, [patientIdFromUrl])
 
   // 处理文件选择
   const handleFileSelect = (file: File, type: 'before' | 'after') => {
@@ -155,10 +169,44 @@ export default function UploadPage() {
 
       <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Back Button */}
-        <Link href="/dashboard" className="inline-flex items-center text-gray-600 hover:text-gray-900 mb-6">
+        <Link href={patientIdFromUrl ? `/patients/${patientIdFromUrl}` : "/dashboard"} className="inline-flex items-center text-gray-600 hover:text-gray-900 mb-6">
           <ArrowLeft className="h-4 w-4 mr-2" />
-          返回 Dashboard
+          {patientIdFromUrl ? '返回患者详情' : '返回 Dashboard'}
         </Link>
+
+        {/* Patient Info Card */}
+        {patientIdFromUrl && (
+          <div className="mb-8 p-6 bg-gradient-to-r from-primary-50 to-secondary-50 rounded-xl border border-primary-200">
+            {patientLoading ? (
+              <div className="flex items-center space-x-3">
+                <Loader2 className="w-5 h-5 text-primary-600 animate-spin" />
+                <span className="text-gray-700">加载患者信息中...</span>
+              </div>
+            ) : patient ? (
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-4">
+                  <div className="w-12 h-12 bg-gradient-to-br from-primary-500 to-secondary-500 rounded-full flex items-center justify-center text-white font-bold">
+                    {patient.first_name[0]}{patient.last_name[0]}
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-gray-900">
+                      {patient.first_name} {patient.last_name}
+                    </h3>
+                    <p className="text-sm text-gray-600">
+                      患者编号: {patient.patient_id || patientIdFromUrl}
+                    </p>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <p className="text-sm text-gray-600">已完成治疗次数</p>
+                  <p className="text-2xl font-bold text-primary-600">{patient.total_treatments}</p>
+                </div>
+              </div>
+            ) : (
+              <p className="text-gray-700">患者信息加载失败，请检查患者 ID</p>
+            )}
+          </div>
+        )}
 
         {/* Title */}
         <div className="mb-8">

@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { Sparkles, Camera, Users, FileText, TrendingUp, Calendar, Loader2 } from 'lucide-react'
+import { Sparkles, Users, FileText, TrendingUp, Loader2, LogOut } from 'lucide-react'
 import { useClinicPatients } from '@/hooks/usePatients'
 
 export default function Dashboard() {
@@ -35,12 +35,18 @@ export default function Dashboard() {
               <Link href="/analysis" className="text-gray-700 hover:text-primary-600">
                 AI分析
               </Link>
-              <Link href="/upload" className="text-gray-700 hover:text-primary-600">
-                上传分析
-              </Link>
-              <Link href="/" className="text-gray-700 hover:text-primary-600">
-                返回首页
-              </Link>
+              <button
+                onClick={() => {
+                  // TODO: 实现登出逻辑 (清除 session, 重定向到登录页)
+                  console.log('用户登出')
+                  window.location.href = '/'
+                }}
+                className="flex items-center space-x-2 px-4 py-2 text-gray-700 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                title="登出系统"
+              >
+                <LogOut className="w-4 h-4" />
+                <span>登出</span>
+              </button>
             </nav>
           </div>
         </div>
@@ -125,12 +131,6 @@ export default function Dashboard() {
               <div className="card">
                 <h3 className="text-xl font-bold text-gray-900 mb-6">快速操作</h3>
                 <div className="space-y-3">
-                  <QuickActionButton
-                    icon={Camera}
-                    label="上传新照片"
-                    description="开始新的对比分析"
-                    href="/upload"
-                  />
                   <QuickActionButton
                     icon={Users}
                     label="添加患者"
