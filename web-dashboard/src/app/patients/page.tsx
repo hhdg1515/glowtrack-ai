@@ -6,7 +6,6 @@ import {
   User,
   Plus,
   Search,
-  Filter,
   SortAsc,
   SortDesc,
   Mail,
@@ -19,6 +18,8 @@ import {
 } from 'lucide-react'
 import { useClinicPatients } from '@/hooks/usePatients'
 import type { Patient } from '@/types/api'
+import Pagination from '@/components/Pagination'
+import PatientFilters, { type PatientFilterOptions } from '@/components/PatientFilters'
 
 export default function PatientsPage() {
   // TODO: 从用户 session 获取 clinic_id
@@ -32,21 +33,53 @@ export default function PatientsPage() {
   const [sortBy, setSortBy] = useState<'name' | 'date' | 'treatments'>('name')
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc')
 
-  // 筛选和排序患者
-  const filteredAndSortedPatients = useMemo(() => {
-    if (!data?.patients) return []
+  // 高级筛选状态
+  const [filters, setFilters] = useState<PatientFilterOptions>({
+    skinTypes: [],
+    treatmentCountRange: null,
+  })
 
+  // 分页状态
+  const [currentPage, setCurrentPage] = useState(1)
+  const [itemsPerPage, setItemsPerPage] = useState(12)
+
+  // 筛选、排序和分页患者
+  const { paginatedPatients, totalFilteredCount } = useMemo(() => {
+    if (!data?.patients) return { paginatedPatients: [], totalFilteredCount: 0 }
+
+    // 第一步：搜索筛选
     let filtered = data.patients.filter((patient) => {
       const searchLower = searchQuery.toLowerCase()
-      return (
+      const matchesSearch =
         patient.first_name.toLowerCase().includes(searchLower) ||
         patient.last_name.toLowerCase().includes(searchLower) ||
         patient.email?.toLowerCase().includes(searchLower) ||
         patient.phone?.includes(searchQuery)
-      )
+
+      if (!matchesSearch) return false
+
+      // 第二步：肤质筛选
+      if (filters.skinTypes.length > 0) {
+        if (!patient.skin_type || !filters.skinTypes.includes(patient.skin_type)) {
+          return false
+        }
+      }
+
+      // 第三步：治疗次数筛选
+      if (filters.treatmentCountRange) {
+        const { min, max } = filters.treatmentCountRange
+        const treatmentCount = patient.total_treatments
+        if (treatmentCount < min || treatmentCount > max) {
+          return false
+        }
+      }
+
+      return true
     })
 
-    // 排序
+    const totalFilteredCount = filtered.length
+
+    // 第四步：排序
     filtered.sort((a, b) => {
       let comparison = 0
 
@@ -65,12 +98,47 @@ export default function PatientsPage() {
       return sortOrder === 'asc' ? comparison : -comparison
     })
 
-    return filtered
-  }, [data?.patients, searchQuery, sortBy, sortOrder])
+    // 第五步：分页
+    const startIndex = (currentPage - 1) * itemsPerPage
+    const endIndex = startIndex + itemsPerPage
+    const paginatedPatients = filtered.slice(startIndex, endIndex)
+
+    return { paginatedPatients, totalFilteredCount }
+  }, [data?.patients, searchQuery, sortBy, sortOrder, filters, currentPage, itemsPerPage])
+
+  // 计算总页数
+  const totalPages = Math.ceil(totalFilteredCount / itemsPerPage)
 
   // 切换排序顺序
   const toggleSortOrder = () => {
     setSortOrder((prev) => (prev === 'asc' ? 'desc' : 'asc'))
+  }
+
+  // 清除筛选条件
+  const handleClearFilters = () => {
+    setFilters({
+      skinTypes: [],
+      treatmentCountRange: null,
+    })
+    setCurrentPage(1) // 重置到第一页
+  }
+
+  // 当筛选条件改变时，重置到第一页
+  const handleFiltersChange = (newFilters: PatientFilterOptions) => {
+    setFilters(newFilters)
+    setCurrentPage(1)
+  }
+
+  // 当搜索改变时，重置到第一页
+  const handleSearchChange = (value: string) => {
+    setSearchQuery(value)
+    setCurrentPage(1)
+  }
+
+  // 改变每页显示数量时，重置到第一页
+  const handleItemsPerPageChange = (value: number) => {
+    setItemsPerPage(value)
+    setCurrentPage(1)
   }
 
   return (
@@ -89,7 +157,13 @@ export default function PatientsPage() {
               <div>
                 <h1 className="text-3xl font-bold text-gray-900">患者管理</h1>
                 <p className="text-gray-600 mt-1">
-                  共 {data?.total || 0} 位患者
+                  {totalFilteredCount < (data?.total || 0) ? (
+                    <>
+                      显示 {totalFilteredCount} 位 / 共 {data?.total || 0} 位患者
+                    </>
+                  ) : (
+                    <>共 {data?.total || 0} 位患者</>
+                  )}
                 </p>
               </div>
             </div>
@@ -106,8 +180,8 @@ export default function PatientsPage() {
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* 搜索和筛选栏 */}
-        <div className="bg-white rounded-xl shadow-md p-6 mb-8">
+        {/* 搜索和排序栏 */}
+        <div className="bg-white rounded-xl shadow-md p-6 mb-6">
           <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between space-y-4 lg:space-y-0 lg:space-x-4">
             {/* 搜索框 */}
             <div className="flex-1 max-w-md">
@@ -117,7 +191,7 @@ export default function PatientsPage() {
                   type="text"
                   placeholder="搜索患者姓名、邮箱或电话..."
                   value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
+                  onChange={(e) => handleSearchChange(e.target.value)}
                   className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                 />
               </div>
@@ -150,6 +224,15 @@ export default function PatientsPage() {
           </div>
         </div>
 
+        {/* 高级筛选 */}
+        <div className="mb-6">
+          <PatientFilters
+            filters={filters}
+            onFiltersChange={handleFiltersChange}
+            onClear={handleClearFilters}
+          />
+        </div>
+
         {/* 患者列表 */}
         {isLoading && (
           <div className="flex items-center justify-center py-20">
@@ -170,34 +253,66 @@ export default function PatientsPage() {
           </div>
         )}
 
-        {!isLoading && !error && filteredAndSortedPatients.length === 0 && (
+        {!isLoading && !error && totalFilteredCount === 0 && (
           <div className="bg-white rounded-xl shadow-md p-12 text-center">
             <User className="w-16 h-16 text-gray-300 mx-auto mb-4" />
             <h3 className="text-xl font-semibold text-gray-900 mb-2">
-              {searchQuery ? '未找到匹配的患者' : '还没有患者'}
+              {searchQuery || filters.skinTypes.length > 0 || filters.treatmentCountRange
+                ? '未找到匹配的患者'
+                : '还没有患者'}
             </h3>
             <p className="text-gray-600 mb-6">
-              {searchQuery
-                ? '尝试使用不同的搜索词'
+              {searchQuery || filters.skinTypes.length > 0 || filters.treatmentCountRange
+                ? '尝试调整搜索条件或筛选条件'
                 : '点击上方"添加患者"按钮开始添加患者'}
             </p>
-            {searchQuery && (
-              <button
-                onClick={() => setSearchQuery('')}
-                className="px-6 py-2 text-primary-600 hover:bg-primary-50 rounded-lg transition-colors"
-              >
-                清除搜索
-              </button>
+            {(searchQuery || filters.skinTypes.length > 0 || filters.treatmentCountRange) && (
+              <div className="flex items-center justify-center space-x-3">
+                {searchQuery && (
+                  <button
+                    onClick={() => handleSearchChange('')}
+                    className="px-6 py-2 text-primary-600 hover:bg-primary-50 rounded-lg transition-colors"
+                  >
+                    清除搜索
+                  </button>
+                )}
+                {(filters.skinTypes.length > 0 || filters.treatmentCountRange) && (
+                  <button
+                    onClick={handleClearFilters}
+                    className="px-6 py-2 text-primary-600 hover:bg-primary-50 rounded-lg transition-colors"
+                  >
+                    清除筛选
+                  </button>
+                )}
+              </div>
             )}
           </div>
         )}
 
-        {!isLoading && !error && filteredAndSortedPatients.length > 0 && (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredAndSortedPatients.map((patient) => (
-              <PatientCard key={patient.id} patient={patient} />
-            ))}
-          </div>
+        {!isLoading && !error && totalFilteredCount > 0 && (
+          <>
+            {/* 患者卡片网格 */}
+            <div className="bg-white rounded-xl shadow-md overflow-hidden">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 p-6">
+                {paginatedPatients.map((patient) => (
+                  <PatientCard key={patient.id} patient={patient} />
+                ))}
+              </div>
+
+              {/* 分页控件 */}
+              {totalPages > 1 && (
+                <Pagination
+                  currentPage={currentPage}
+                  totalPages={totalPages}
+                  totalItems={totalFilteredCount}
+                  itemsPerPage={itemsPerPage}
+                  onPageChange={setCurrentPage}
+                  onItemsPerPageChange={handleItemsPerPageChange}
+                  itemsPerPageOptions={[12, 24, 48, 96]}
+                />
+              )}
+            </div>
+          </>
         )}
       </div>
     </div>
