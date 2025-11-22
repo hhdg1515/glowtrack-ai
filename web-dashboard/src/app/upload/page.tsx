@@ -14,6 +14,7 @@ import {
   ArrowLeft,
   Calendar
 } from 'lucide-react'
+import AIAnalysisLoader from '@/components/AIAnalysisLoader'
 
 interface UploadedImage {
   file: File
@@ -326,6 +327,17 @@ export default function UploadPage() {
           </ul>
         </div>
       </div>
+
+      {/* AI Analysis Loader - Shows during analysis */}
+      {isAnalyzing && !analysisResult && (
+        <AIAnalysisLoader
+          estimatedTime={10}
+          onComplete={() => {
+            // Loader animation completes, but we wait for actual API response
+            console.log('Analysis animation completed')
+          }}
+        />
+      )}
     </div>
   )
 }
