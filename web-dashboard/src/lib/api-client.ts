@@ -1,5 +1,9 @@
 /**
  * API 客户端 - 使用 Axios
+ *
+ * Mock 模式说明：
+ * 设置环境变量 NEXT_PUBLIC_USE_MOCK=true 可以启用 mock 数据模式
+ * 默认使用真实 API（需要后端服务运行）
  */
 
 import axios, { AxiosInstance, AxiosError } from 'axios'
@@ -15,6 +19,10 @@ import type {
   AnalysisResult,
   ApiError,
 } from '@/types/api'
+import { mockPatientsApi, mockTreatmentsApi } from './mock-api-client'
+
+// 检查是否使用 mock 数据
+const USE_MOCK = process.env.NEXT_PUBLIC_USE_MOCK === 'true'
 
 // API 基础 URL
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'
@@ -72,103 +80,110 @@ apiClient.interceptors.response.use(
 
 // ============ 患者 API ============
 
-export const patientsApi = {
-  /**
-   * 获取诊所的所有患者
-   */
-  getClinicPatients: async (
-    clinicId: string,
-    params?: { skip?: number; limit?: number }
-  ): Promise<PatientsResponse> => {
-    const response = await apiClient.get<PatientsResponse>(
-      `/api/v1/patients/clinic/${clinicId}`,
-      { params }
-    )
-    return response.data
-  },
+export const patientsApi = USE_MOCK
+  ? mockPatientsApi
+  : {
+      /**
+       * 获取诊所的所有患者
+       */
+      getClinicPatients: async (
+        clinicId: string,
+        params?: { skip?: number; limit?: number }
+      ): Promise<PatientsResponse> => {
+        const response = await apiClient.get<PatientsResponse>(
+          `/api/v1/patients/clinic/${clinicId}`,
+          { params }
+        )
+        return response.data
+      },
 
-  /**
-   * 获取单个患者详情
-   */
-  getPatient: async (patientId: string): Promise<Patient> => {
-    const response = await apiClient.get<Patient>(`/api/v1/patients/${patientId}`)
-    return response.data
-  },
+      /**
+       * 获取单个患者详情
+       */
+      getPatient: async (patientId: string): Promise<Patient> => {
+        const response = await apiClient.get<Patient>(`/api/v1/patients/${patientId}`)
+        return response.data
+      },
 
-  /**
-   * 创建新患者
-   */
-  createPatient: async (data: PatientCreate): Promise<Patient> => {
-    const response = await apiClient.post<Patient>('/api/v1/patients/', data)
-    return response.data
-  },
+      /**
+       * 创建新患者
+       */
+      createPatient: async (data: PatientCreate): Promise<Patient> => {
+        const response = await apiClient.post<Patient>('/api/v1/patients/', data)
+        return response.data
+      },
 
-  /**
-   * 更新患者信息
-   */
-  updatePatient: async (patientId: string, data: PatientUpdate): Promise<Patient> => {
-    const response = await apiClient.put<Patient>(`/api/v1/patients/${patientId}`, data)
-    return response.data
-  },
+      /**
+       * 更新患者信息
+       */
+      updatePatient: async (patientId: string, data: PatientUpdate): Promise<Patient> => {
+        const response = await apiClient.put<Patient>(
+          `/api/v1/patients/${patientId}`,
+          data
+        )
+        return response.data
+      },
 
-  /**
-   * 删除患者
-   */
-  deletePatient: async (patientId: string): Promise<void> => {
-    await apiClient.delete(`/api/v1/patients/${patientId}`)
-  },
-}
+      /**
+       * 删除患者
+       */
+      deletePatient: async (patientId: string): Promise<void> => {
+        await apiClient.delete(`/api/v1/patients/${patientId}`)
+      },
+    }
 
 // ============ 治疗记录 API ============
 
-export const treatmentsApi = {
-  /**
-   * 获取患者的所有治疗记录
-   */
-  getPatientTreatments: async (patientId: string): Promise<TreatmentsResponse> => {
-    const response = await apiClient.get<TreatmentsResponse>(
-      `/api/v1/treatments/patient/${patientId}`
-    )
-    return response.data
-  },
+export const treatmentsApi = USE_MOCK
+  ? mockTreatmentsApi
+  : {
+      /**
+       * 获取患者的所有治疗记录
+       */
+      getPatientTreatments: async (patientId: string): Promise<TreatmentsResponse> => {
+        const response = await apiClient.get<TreatmentsResponse>(
+          `/api/v1/treatments/patient/${patientId}`
+        )
+        return response.data
+      },
 
-  /**
-   * 获取单个治疗记录详情
-   */
-  getTreatment: async (treatmentId: string): Promise<Treatment> => {
-    const response = await apiClient.get<Treatment>(`/api/v1/treatments/${treatmentId}`)
-    return response.data
-  },
+      /**
+       * 获取单个治疗记录详情
+       */
+      getTreatment: async (treatmentId: string): Promise<Treatment> => {
+        const response = await apiClient.get<Treatment>(`/api/v1/treatments/${treatmentId}`)
+        return response.data
+      },
 
-  /**
-   * 创建新治疗记录
-   */
-  createTreatment: async (data: TreatmentCreate): Promise<Treatment> => {
-    const response = await apiClient.post<Treatment>('/api/v1/treatments/', data)
-    return response.data
-  },
+      /**
+       * 创建新治疗记录
+       */
+      createTreatment: async (data: TreatmentCreate): Promise<Treatment> => {
+        const response = await apiClient.post<Treatment>('/api/v1/treatments/', data)
+        return response.data
+      },
 
-  /**
-   * 更新治疗记录
-   */
-  updateTreatment: async (
-    treatmentId: string,
-    data: TreatmentUpdate
-  ): Promise<Treatment> => {
-    const response = await apiClient.put<Treatment>(
-      `/api/v1/treatments/${treatmentId}`,
-      data
-    )
-    return response.data
-  },
+      /**
+       * 更新治疗记录
+       */
+      updateTreatment: async (
+        treatmentId: string,
+        data: TreatmentUpdate
+      ): Promise<Treatment> => {
+        const response = await apiClient.put<Treatment>(
+          `/api/v1/treatments/${treatmentId}`,
+          data
+        )
+        return response.data
+      },
 
-  /**
-   * 删除治疗记录
-   */
-  deleteTreatment: async (treatmentId: string): Promise<void> => {
-    await apiClient.delete(`/api/v1/treatments/${treatmentId}`)
-  },
-}
+      /**
+       * 删除治疗记录
+       */
+      deleteTreatment: async (treatmentId: string): Promise<void> => {
+        await apiClient.delete(`/api/v1/treatments/${treatmentId}`)
+      },
+    }
 
 // ============ AI 分析 API ============
 

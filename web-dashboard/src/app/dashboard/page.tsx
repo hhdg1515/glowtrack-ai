@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { Sparkles, Users, FileText, TrendingUp, Loader2, LogOut } from 'lucide-react'
+import { Sparkles, Users, FileText, TrendingUp, Loader2, LogOut, Camera } from 'lucide-react'
 import { useClinicPatients } from '@/hooks/usePatients'
 
 export default function Dashboard() {
