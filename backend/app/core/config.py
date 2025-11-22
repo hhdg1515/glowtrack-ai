@@ -54,7 +54,10 @@ class Settings(BaseSettings):
     R2_BUCKET_NAME: Optional[str] = None
 
     # AI服务配置
-    # Face++ API
+    # Claude API (主要分析引擎)
+    CLAUDE_API_KEY: Optional[str] = None
+
+    # Face++ API (辅助分析)
     FACEPP_API_KEY: Optional[str] = None
     FACEPP_API_SECRET: Optional[str] = None
 
